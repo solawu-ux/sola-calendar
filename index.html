@@ -109,30 +109,6 @@
   }
   .today-btn:hover { opacity: 0.85; }
 
-  /* ===== LEGEND ===== */
-  .legend-bar {
-    display: flex; align-items: center; justify-content: center;
-    padding: 10px 28px; background: var(--surface);
-    border-bottom: 1px solid var(--border); min-height: 42px;
-  }
-  .quote-text {
-    font-family: 'Noto Serif TC', serif; font-size: 0.88rem; color: var(--accent);
-    letter-spacing: 0.06em; text-align: center; font-style: italic; line-height: 1.5;
-    opacity: 0; transition: opacity 0.8s ease;
-  }
-  .quote-text.visible { opacity: 1; }
-  .quote-loading {
-    font-size: 0.78rem; color: var(--text-light);
-    letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;
-  }
-  .quote-dots { display: flex; gap: 4px; }
-  .quote-dots span {
-    width: 5px; height: 5px; border-radius: 50%; background: var(--border);
-    animation: dotBounce 1.2s ease-in-out infinite;
-  }
-  .quote-dots span:nth-child(2){animation-delay:0.2s;}
-  .quote-dots span:nth-child(3){animation-delay:0.4s;}
-
   /* ===== CALENDAR GRID ===== */
   .calendar-wrap { padding: 20px 20px 80px; max-width: 1600px; margin: 0 auto; background: #f0f0f5; }
   .weekdays-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
@@ -276,7 +252,6 @@
   .entry-row.dragging { opacity: 0.35; }
   .entry-row.drag-over { box-shadow: 0 -3px 0 0 var(--accent); }
 
-  /* ── 拖曳把手 ── */
   .drag-handle {
     display: flex; align-items: flex-start; justify-content: center;
     padding-top: 10px; cursor: grab;
@@ -373,8 +348,6 @@
     .entry-chip span { font-size: 0.58rem; }
     .entry-chip .cat-dot { width: 4px; height: 4px; }
     .more-badge { font-size: 0.52rem; }
-    .legend-bar { padding: 8px 12px; }
-    .quote-text { font-size: 0.78rem; }
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -438,13 +411,6 @@
   </div>
 </header>
 
-<div class="legend-bar" id="quoteBar">
-  <div class="quote-loading" id="quoteLoading">
-    <div class="quote-dots"><span></span><span></span><span></span></div>
-  </div>
-  <div class="quote-text" id="quoteText"></div>
-</div>
-
 <div class="calendar-wrap">
   <div class="weekdays-row" id="weekdaysRow"></div>
   <div class="calendar-grid" id="calendarGrid"></div>
@@ -504,6 +470,16 @@ const CATEGORIES = [
   { id:'t10', label:'10', icon:'10', barClass:'ct-t10', chipClass:'cat-t10', bgClass:'bg-t10', dotClass:'dot-t10' },
 ];
 
+// 教務處分類定義（統一管理，格子與 modal 共用）
+const SRC_CATS = [
+  { id:'school', label:'學校', chipClass:'cat-school', dotClass:'dot-school' },
+  { id:'admin',  label:'教務', chipClass:'cat-admin',  dotClass:'dot-admin'  },
+  { id:'teach',  label:'教學', chipClass:'cat-teach',  dotClass:'dot-teach'  },
+  { id:'reg',    label:'註冊', chipClass:'cat-reg',    dotClass:'dot-reg'    },
+  { id:'equip',  label:'設備', chipClass:'cat-equip',  dotClass:'dot-equip'  },
+  { id:'info',   label:'資訊', chipClass:'cat-info',   dotClass:'dot-info'   },
+];
+
 const WEEKDAYS = ['一','二','三','四','五','六','日'];
 
 // ===== STATE =====
@@ -517,7 +493,6 @@ let DATA = {};
 let SOURCE_DATA = {};
 let modalDateStr = '';
 let tempData = {};
-// 追蹤每個日期的代辦排列順序（key: dateStr, value: catId[]）
 let orderData = {};
 let unsub = null;
 let unsubSrc = null;
@@ -544,7 +519,11 @@ function listenSourceMonth(year, month) {
     snap => {
       if (snap.exists()) {
         const newDays = snap.data().days || {};
-        Object.keys(newDays).forEach(dateStr => { SOURCE_DATA[dateStr] = newDays[dateStr]; });
+        // 將教務處資料合併進 SOURCE_DATA
+        Object.keys(newDays).forEach(dateStr => {
+          SOURCE_DATA[dateStr] = newDays[dateStr];
+        });
+        // 重新渲染所有有教務處資料的格子
         Object.keys(newDays).forEach(dateStr => renderChips(dateStr));
       }
     },
@@ -555,6 +534,8 @@ function listenSourceMonth(year, month) {
 // ===== LISTEN: sola 個人資料 =====
 function listenMonth(year, month) {
   if (unsub) unsub();
+  // 切換月份時先清除上月快取，確保新月份的教務處資料能即時顯示
+  SOURCE_DATA = {};
   render();
   hideLoading();
   setSyncStatus('saving', '同步中…');
@@ -568,7 +549,6 @@ function listenMonth(year, month) {
       if (snap.exists()) {
         const snapData = snap.data();
         const newDays = snapData.days || {};
-        // 讀取排序資料
         const newOrders = snapData.orders || {};
         Object.assign(DATA, newDays);
         Object.assign(orderData, newOrders);
@@ -579,6 +559,7 @@ function listenMonth(year, month) {
     err => { clearTimeout(timeout); console.error(err); setSyncStatus('error', '連線失敗'); }
   );
 
+  // 同步教務處資料（會在回呼中自動呼叫 renderChips）
   listenSourceMonth(year, month);
 }
 
@@ -607,17 +588,18 @@ function getDay(dateStr) {
   return DATA[dateStr];
 }
 
-// 取得某日期的排列順序（若無則回傳預設順序）
 function getOrder(dateStr) {
   const saved = orderData[dateStr];
   if (saved && saved.length === CATEGORIES.length) return [...saved];
   return CATEGORIES.map(c => c.id);
 }
 
+// 取得某日期所有要顯示在格子裡的 chip（sola + 教務處）
 function getAllChips(dateStr) {
   const chips = [];
+
+  // sola 個人資料
   if (DATA[dateStr]) {
-    // 依照排列順序輸出
     const order = getOrder(dateStr);
     order.forEach(catId => {
       const c = CATEGORIES.find(x => x.id === catId);
@@ -627,25 +609,22 @@ function getAllChips(dateStr) {
       });
     });
   }
+
+  // 教務處資料
   if (SOURCE_DATA[dateStr]) {
-    const srcCats = [
-      { id:'school', label:'學校', chipClass:'cat-school', dotClass:'dot-school' },
-      { id:'admin',  label:'教務', chipClass:'cat-admin',  dotClass:'dot-admin'  },
-      { id:'teach',  label:'教學', chipClass:'cat-teach',  dotClass:'dot-teach'  },
-      { id:'reg',    label:'註冊', chipClass:'cat-reg',    dotClass:'dot-reg'    },
-      { id:'equip',  label:'設備', chipClass:'cat-equip',  dotClass:'dot-equip'  },
-      { id:'info',   label:'資訊', chipClass:'cat-info',   dotClass:'dot-info'   },
-    ];
-    srcCats.forEach(sc => {
+    SRC_CATS.forEach(sc => {
       (SOURCE_DATA[dateStr][sc.id]||[]).forEach(it => {
-        if (it.event||it.time||it.place) chips.push({
-          cat:{ chipClass: sc.chipClass, dotClass: sc.dotClass },
-          label: `${sc.label}：${it.event||it.time||it.place}`,
-          source:'school'
-        });
+        if (it.event || it.time || it.place) {
+          chips.push({
+            cat: { chipClass: sc.chipClass, dotClass: sc.dotClass },
+            label: `${sc.label}：${it.event || it.time || it.place}`,
+            source: 'school'
+          });
+        }
       });
     });
   }
+
   return chips;
 }
 
@@ -710,14 +689,14 @@ function renderChips(dateStr) {
   if (!container) return;
   container.innerHTML = '';
   const chips = getAllChips(dateStr);
-  chips.slice(0,4).forEach(chip => {
+  chips.slice(0, 4).forEach(chip => {
     const el = document.createElement('div');
     el.className = `entry-chip ${chip.cat.chipClass}`;
     const doneStyle = chip.done ? ' style="opacity:0.6"' : '';
     el.innerHTML = `<div class="cat-dot ${chip.cat.dotClass}"></div><span${doneStyle}>${chip.label}</span>`;
     container.appendChild(el);
   });
-  if (chips.length>4) {
+  if (chips.length > 4) {
     const more = document.createElement('div');
     more.className = 'more-badge';
     more.textContent = `+${chips.length-4} 筆`;
@@ -740,7 +719,6 @@ function openModal(dateStr) {
   document.getElementById('modalOverlay').classList.add('open');
 }
 
-// ===== RENDER MODAL BODY (含拖曳排序) =====
 function renderModalBody() {
   const body = document.getElementById('modalBody');
   body.innerHTML = '';
@@ -748,12 +726,8 @@ function renderModalBody() {
   // === 教務處同步區（唯讀）===
   const srcData = SOURCE_DATA[modalDateStr];
   if (srcData) {
-    const srcCats = [
-      {id:'school',label:'學校'},{id:'admin',label:'教務'},{id:'teach',label:'教學'},
-      {id:'reg',label:'註冊'},{id:'equip',label:'設備'},{id:'info',label:'資訊'},
-    ];
     let hasAny = false;
-    srcCats.forEach(sc => { (srcData[sc.id]||[]).forEach(it => { if (it.event||it.time||it.place) hasAny=true; }); });
+    SRC_CATS.forEach(sc => { (srcData[sc.id]||[]).forEach(it => { if (it.event||it.time||it.place) hasAny=true; }); });
 
     if (hasAny) {
       const syncBlock = document.createElement('div');
@@ -762,7 +736,7 @@ function renderModalBody() {
       syncTitle.style.cssText = 'padding:7px 14px;font-size:0.78rem;font-weight:500;letter-spacing:0.06em;background:var(--accent);color:#f5f0eb;display:flex;align-items:center;gap:8px;';
       syncTitle.innerHTML = '🔄 教務處行事曆（同步，唯讀）';
       syncBlock.appendChild(syncTitle);
-      srcCats.forEach(sc => {
+      SRC_CATS.forEach(sc => {
         const items = (srcData[sc.id]||[]).filter(it => it.event||it.time||it.place);
         if (!items.length) return;
         items.forEach(it => {
@@ -792,11 +766,9 @@ function renderModalBody() {
   const itemsDiv = document.createElement('div');
   itemsDiv.className = 'cat-items';
 
-  // 目前這個日期的排列順序（modal 內部暫存，不影響 orderData 直到儲存）
   let catOrder = getOrder(modalDateStr);
 
   function buildRows() {
-    // 儲存目前所有 textarea 的值到 tempData，避免 rebuild 時遺失
     itemsDiv.querySelectorAll('.entry-row[data-cat-id]').forEach(r => {
       const cid = r.dataset.catId;
       const ta = r.querySelector('textarea');
@@ -817,14 +789,12 @@ function renderModalBody() {
       row.dataset.catId = cat.id;
       row.draggable = true;
 
-      // ── 拖曳把手 ──
       const handle = document.createElement('div');
       handle.className = 'drag-handle';
       handle.innerHTML = '⠿';
       handle.title = '拖曳排序';
       row.appendChild(handle);
 
-      // ── 勾選欄 ──
       const checkCell = document.createElement('div');
       checkCell.className = 'entry-check-cell';
       const chk = document.createElement('input');
@@ -838,7 +808,6 @@ function renderModalBody() {
       checkCell.appendChild(chk);
       row.appendChild(checkCell);
 
-      // ── 文字輸入 ──
       const inp = document.createElement('textarea');
       inp.className = 'entry-input';
       inp.rows = 1;
@@ -861,7 +830,6 @@ function renderModalBody() {
       inputWrap.appendChild(doneBadge);
       row.appendChild(inputWrap);
 
-      // ══ Drag events（桌機）══
       row.addEventListener('dragstart', e => {
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', cat.id);
@@ -892,14 +860,12 @@ function renderModalBody() {
         buildRows();
       });
 
-      // ══ Touch events（手機）══
       let touchClone = null;
       let isDragging = false;
 
       handle.addEventListener('touchstart', e => {
         isDragging = true;
         row.classList.add('dragging');
-        // 建立視覺分身跟著手指移動
         touchClone = row.cloneNode(true);
         const rect = row.getBoundingClientRect();
         touchClone.style.cssText = `
@@ -917,12 +883,9 @@ function renderModalBody() {
         const touch = e.touches[0];
         touchClone.style.left = (touch.clientX - touchClone.offsetWidth / 2) + 'px';
         touchClone.style.top  = (touch.clientY - 28) + 'px';
-
-        // 隱藏分身，找真正在下方的元素
         touchClone.style.display = 'none';
         const els = document.elementsFromPoint(touch.clientX, touch.clientY);
         touchClone.style.display = '';
-
         const targetRow = els.find(el =>
           el.classList && el.classList.contains('entry-row') && el !== row
         );
@@ -933,17 +896,14 @@ function renderModalBody() {
       handle.addEventListener('touchend', e => {
         if (!isDragging) return;
         isDragging = false;
-
         const touch = e.changedTouches[0];
         if (touchClone) { touchClone.style.display = 'none'; }
         const els = document.elementsFromPoint(touch.clientX, touch.clientY);
         if (touchClone) { touchClone.remove(); touchClone = null; }
-
         const targetRow = els.find(el =>
           el.classList && el.classList.contains('entry-row') && el !== row
         );
         itemsDiv.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-
         if (targetRow && targetRow.dataset.catId) {
           const fromId = cat.id;
           const toId = targetRow.dataset.catId;
@@ -966,7 +926,6 @@ function renderModalBody() {
   todoSection.appendChild(itemsDiv);
   body.appendChild(todoSection);
 
-  // 讓 saveModal 能存取目前 catOrder
   todoSection._getCatOrder = () => catOrder;
 }
 
@@ -975,7 +934,6 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 async function saveModal() {
   if (!DATA[modalDateStr]) DATA[modalDateStr] = {};
 
-  // 先同步 textarea 值（避免 buildRows 尚未同步的情況）
   const itemsDiv = document.querySelector('#modalBody .cat-items');
   if (itemsDiv) {
     itemsDiv.querySelectorAll('.entry-row[data-cat-id]').forEach(r => {
@@ -989,7 +947,6 @@ async function saveModal() {
 
   CATEGORIES.forEach(c => { DATA[modalDateStr][c.id] = tempData[c.id].map(it=>({...it})); });
 
-  // 取得目前排列順序
   const todoSection = document.querySelector('#modalBody .cat-section');
   const currentOrder = todoSection && todoSection._getCatOrder ? todoSection._getCatOrder() : CATEGORIES.map(c=>c.id);
   orderData[modalDateStr] = currentOrder;
@@ -1025,54 +982,6 @@ document.getElementById('modalCancel').addEventListener('click', closeModal);
 document.getElementById('modalSave').addEventListener('click', saveModal);
 document.getElementById('modalOverlay').addEventListener('click', e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
 document.addEventListener('keydown', e=>{if(e.key==='Escape')closeModal();});
-
-// ===== DAILY QUOTE =====
-async function loadDailyQuote() {
-  const today = new Date();
-  const dateKey = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
-  const cacheKey = `sola_quote_${dateKey}`;
-  const cached = localStorage.getItem(cacheKey);
-
-  const quoteEl = document.getElementById('quoteText');
-  const loadingEl = document.getElementById('quoteLoading');
-
-  function showQuote(text) {
-    loadingEl.style.display = 'none';
-    quoteEl.textContent = `✨ ${text}`;
-    requestAnimationFrame(() => quoteEl.classList.add('visible'));
-  }
-
-  if (cached) { showQuote(cached); return; }
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{
-          role: 'user',
-          content: `Give me ONE short, beautiful English motivational quote for today (${dateKey}). 
-Reply with ONLY the quote and attribution if known, nothing else. 
-Format: "Quote text." — Author (if known)
-Keep it under 20 words total.`
-        }]
-      })
-    });
-    const data = await res.json();
-    const quote = data.content?.[0]?.text?.trim();
-    if (quote) { localStorage.setItem(cacheKey, quote); showQuote(quote); }
-  } catch(e) {
-    const fallbacks = [
-      '"Every day is a new beginning." — Unknown',
-      '"Small steps every day lead to big change." — Unknown',
-      '"You are capable of amazing things." — Unknown',
-    ];
-    showQuote(fallbacks[today.getDate() % fallbacks.length]);
-  }
-}
-loadDailyQuote();
 
 // ===== LIVE CLOCK =====
 function updateClock() {
