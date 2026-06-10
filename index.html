@@ -242,7 +242,7 @@
   /* ===== ENTRY ROW ===== */
   .entry-row {
     display: grid;
-    grid-template-columns: 22px 28px 1fr;
+    grid-template-columns: 22px 1fr;
     gap: 0; border-top: 1px solid var(--border);
     width: 100%; align-items: start;
     transition: opacity 0.15s, box-shadow 0.15s;
@@ -275,31 +275,7 @@
   .entry-input:focus { background: rgba(255,255,255,0.92); color: #28263c; }
   .entry-input:last-child { border-right: none; }
 
-  .entry-check-cell {
-    display: flex; align-items: flex-start; justify-content: center;
-    border-right: 1px solid var(--border); padding-top: 12px;
-  }
-  .entry-check {
-    width: 14px; height: 14px; border-radius: 3px;
-    border: 1.5px solid var(--border); appearance: none; -webkit-appearance: none;
-    cursor: pointer; transition: background 0.15s, border-color 0.15s;
-    position: relative; flex-shrink: 0;
-  }
-  .entry-check:checked { background: var(--accent); border-color: var(--accent); }
-  .entry-check:checked::after {
-    content: ''; position: absolute; left: 2px; top: -1px;
-    width: 8px; height: 5px;
-    border-left: 2px solid #fff; border-bottom: 2px solid #fff;
-    transform: rotate(-45deg);
-  }
-  .entry-row.done .entry-input { color: var(--text-light); opacity: 0.6; }
-  .entry-done-badge {
-    display: none; font-size: 0.68rem; color: var(--accent);
-    background: rgba(124,120,160,0.12); border: 1px solid rgba(124,120,160,0.3);
-    border-radius: 4px; padding: 1px 7px; margin: 0 8px 6px 10px;
-    letter-spacing: 0.05em; font-weight: 500;
-  }
-  .entry-row.done .entry-done-badge { display: inline-block; }
+
 
   .entry-row.bg-t1  .entry-input { background: var(--t1-bg); }
   .entry-row.bg-t2  .entry-input { background: var(--t2-bg); }
@@ -511,30 +487,57 @@ function setSyncStatus(cls, text) {
   document.getElementById('syncText').textContent = text;
 }
 
+// ===== 渲染本月所有格子 =====
+function renderAllChipsForMonth(year, month) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    renderChips(dateStr);
+  }
+}
+
 // ===== LISTEN: 教務處（唯讀）=====
-function listenSourceMonth(year, month) {
+// onReady callback 在第一次 snapshot 回來後觸發（不論有無資料）
+function listenSourceMonth(year, month, onReady) {
   if (unsubSrc) unsubSrc();
   const docId = `${year}-${String(month).padStart(2,'0')}`;
-  unsubSrc = onSnapshot(doc(db, 'calendar', docId),
+  let firstSnap = true;
+
+  unsubSrc = onSnapshot(
+    doc(db, 'calendar', docId),
     snap => {
       if (snap.exists()) {
         const newDays = snap.data().days || {};
-        // 將教務處資料合併進 SOURCE_DATA
         Object.keys(newDays).forEach(dateStr => {
           SOURCE_DATA[dateStr] = newDays[dateStr];
         });
-        // 重新渲染所有有教務處資料的格子
-        Object.keys(newDays).forEach(dateStr => renderChips(dateStr));
+        // 非首次更新（即時推播）：直接渲染有變動的格子
+        if (!firstSnap) {
+          Object.keys(newDays).forEach(dateStr => renderChips(dateStr));
+        }
+      }
+      if (firstSnap) {
+        firstSnap = false;
+        onReady && onReady();
       }
     },
-    err => { console.error('source sync error', err); }
+    err => {
+      console.error('source sync error', err);
+      // 就算失敗也要觸發 onReady，避免畫面卡住
+      if (firstSnap) {
+        firstSnap = false;
+        onReady && onReady();
+      }
+    }
   );
 }
 
 // ===== LISTEN: sola 個人資料 =====
 function listenMonth(year, month) {
   if (unsub) unsub();
-  // 切換月份時先清除上月快取，確保新月份的教務處資料能即時顯示
+
+  // 切換月份時清空資料，避免舊月份資料殘留
+  DATA = {};
   SOURCE_DATA = {};
   render();
   hideLoading();
@@ -543,7 +546,17 @@ function listenMonth(year, month) {
   const timeout = setTimeout(() => { setSyncStatus('error', '網路較慢'); }, 3000);
   const docId = `${year}-${String(month).padStart(2,'0')}`;
 
-  unsub = onSnapshot(doc(db, 'sola_calendar', docId),
+  // 用旗標等兩個 listener 都至少回應一次，再統一渲染所有格子
+  let solaReady = false;
+  let srcReady = false;
+
+  function tryRenderAll() {
+    if (!solaReady || !srcReady) return;
+    renderAllChipsForMonth(year, month);
+  }
+
+  unsub = onSnapshot(
+    doc(db, 'sola_calendar', docId),
     snap => {
       clearTimeout(timeout);
       if (snap.exists()) {
@@ -552,15 +565,25 @@ function listenMonth(year, month) {
         const newOrders = snapData.orders || {};
         Object.assign(DATA, newDays);
         Object.assign(orderData, newOrders);
-        Object.keys(newDays).forEach(dateStr => renderChips(dateStr));
       }
       setSyncStatus('', '已連線');
+      solaReady = true;
+      tryRenderAll();
     },
-    err => { clearTimeout(timeout); console.error(err); setSyncStatus('error', '連線失敗'); }
+    err => {
+      clearTimeout(timeout);
+      console.error(err);
+      setSyncStatus('error', '連線失敗');
+      solaReady = true;
+      tryRenderAll();
+    }
   );
 
-  // 同步教務處資料（會在回呼中自動呼叫 renderChips）
-  listenSourceMonth(year, month);
+  // 教務處 listener，就緒後觸發 tryRenderAll
+  listenSourceMonth(year, month, () => {
+    srcReady = true;
+    tryRenderAll();
+  });
 }
 
 // ===== FIREBASE SAVE =====
@@ -583,7 +606,7 @@ async function saveToFirebase(dateStr, dayData, order) {
 function getDay(dateStr) {
   if (!DATA[dateStr]) DATA[dateStr] = {};
   CATEGORIES.forEach(c => {
-    if (!DATA[dateStr][c.id]) DATA[dateStr][c.id] = [{ text:'', done:false }];
+    if (!DATA[dateStr][c.id]) DATA[dateStr][c.id] = [{ text:'' }];
   });
   return DATA[dateStr];
 }
@@ -594,33 +617,37 @@ function getOrder(dateStr) {
   return CATEGORIES.map(c => c.id);
 }
 
-// 取得某日期所有要顯示在格子裡的 chip（sola + 教務處）
+// 取得某日期所有要顯示在格子裡的 chip
+// 教務處資料優先排前面，避免被 sola 資料擠掉截斷
 function getAllChips(dateStr) {
   const chips = [];
 
-  // sola 個人資料
+  // ① 教務處資料（優先顯示）
+  if (SOURCE_DATA[dateStr]) {
+    SRC_CATS.forEach(sc => {
+      (SOURCE_DATA[dateStr][sc.id] || []).forEach(it => {
+        if (it.event || it.time || it.place) {
+          // 三欄都顯示，用 · 分隔，不遺漏任何有值的欄位
+          const parts = [it.event, it.time, it.place].filter(Boolean);
+          const label = `${sc.label}：${parts.join(' · ')}`;
+          chips.push({
+            cat: { chipClass: sc.chipClass, dotClass: sc.dotClass },
+            label,
+            source: 'school'
+          });
+        }
+      });
+    });
+  }
+
+  // ② sola 個人資料（排後面）
   if (DATA[dateStr]) {
     const order = getOrder(dateStr);
     order.forEach(catId => {
       const c = CATEGORIES.find(x => x.id === catId);
       if (!c) return;
-      (DATA[dateStr][c.id]||[]).forEach(it => {
-        if (it.text) chips.push({ cat:c, label:it.text, source:'sola', done:!!it.done });
-      });
-    });
-  }
-
-  // 教務處資料
-  if (SOURCE_DATA[dateStr]) {
-    SRC_CATS.forEach(sc => {
-      (SOURCE_DATA[dateStr][sc.id]||[]).forEach(it => {
-        if (it.event || it.time || it.place) {
-          chips.push({
-            cat: { chipClass: sc.chipClass, dotClass: sc.dotClass },
-            label: `${sc.label}：${it.event || it.time || it.place}`,
-            source: 'school'
-          });
-        }
+      (DATA[dateStr][c.id] || []).forEach(it => {
+        if (it.text) chips.push({ cat: c, label: it.text, source: 'sola' });
       });
     });
   }
@@ -678,10 +705,10 @@ function render() {
 
     if (cell.current) {
       div.addEventListener('click', () => openModal(dateStr));
-      renderChips(dateStr);
     }
     grid.appendChild(div);
   });
+  // 注意：render() 本身不呼叫 renderChips，由 listenMonth 的 tryRenderAll 統一負責
 }
 
 function renderChips(dateStr) {
@@ -689,17 +716,16 @@ function renderChips(dateStr) {
   if (!container) return;
   container.innerHTML = '';
   const chips = getAllChips(dateStr);
-  chips.slice(0, 4).forEach(chip => {
+  chips.slice(0, 5).forEach(chip => {
     const el = document.createElement('div');
     el.className = `entry-chip ${chip.cat.chipClass}`;
-    const doneStyle = chip.done ? ' style="opacity:0.6"' : '';
-    el.innerHTML = `<div class="cat-dot ${chip.cat.dotClass}"></div><span${doneStyle}>${chip.label}</span>`;
+    el.innerHTML = `<div class="cat-dot ${chip.cat.dotClass}"></div><span>${chip.label}</span>`;
     container.appendChild(el);
   });
-  if (chips.length > 4) {
+  if (chips.length > 5) {
     const more = document.createElement('div');
     more.className = 'more-badge';
-    more.textContent = `+${chips.length-4} 筆`;
+    more.textContent = `+${chips.length-5} 筆`;
     container.appendChild(more);
   }
 }
@@ -714,7 +740,7 @@ function openModal(dateStr) {
   document.getElementById('modalDateWeekday').textContent = `星期${weekdayNames[dow]}`;
   const dayData = getDay(dateStr);
   tempData = {};
-  CATEGORIES.forEach(c => { tempData[c.id] = dayData[c.id].map(it=>({text:it.text||'', done:!!it.done})); });
+  CATEGORIES.forEach(c => { tempData[c.id] = dayData[c.id].map(it=>({text:it.text||''})); });
   renderModalBody();
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -772,9 +798,7 @@ function renderModalBody() {
     itemsDiv.querySelectorAll('.entry-row[data-cat-id]').forEach(r => {
       const cid = r.dataset.catId;
       const ta = r.querySelector('textarea');
-      const chk = r.querySelector('input[type=checkbox]');
       if (ta && tempData[cid]) tempData[cid][0].text = ta.value;
-      if (chk && tempData[cid]) tempData[cid][0].done = chk.checked;
     });
 
     itemsDiv.innerHTML = '';
@@ -785,7 +809,7 @@ function renderModalBody() {
       const item = tempData[cat.id][0];
 
       const row = document.createElement('div');
-      row.className = `entry-row ${cat.bgClass}${item.done?' done':''}`;
+      row.className = `entry-row ${cat.bgClass}`;
       row.dataset.catId = cat.id;
       row.draggable = true;
 
@@ -794,19 +818,6 @@ function renderModalBody() {
       handle.innerHTML = '⠿';
       handle.title = '拖曳排序';
       row.appendChild(handle);
-
-      const checkCell = document.createElement('div');
-      checkCell.className = 'entry-check-cell';
-      const chk = document.createElement('input');
-      chk.type = 'checkbox';
-      chk.className = 'entry-check';
-      chk.checked = !!item.done;
-      chk.addEventListener('change', e => {
-        tempData[cat.id][0].done = e.target.checked;
-        row.classList.toggle('done', e.target.checked);
-      });
-      checkCell.appendChild(chk);
-      row.appendChild(checkCell);
 
       const inp = document.createElement('textarea');
       inp.className = 'entry-input';
@@ -820,15 +831,7 @@ function renderModalBody() {
       });
       setTimeout(() => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; }, 0);
 
-      const doneBadge = document.createElement('span');
-      doneBadge.className = 'entry-done-badge';
-      doneBadge.textContent = '已完成';
-
-      const inputWrap = document.createElement('div');
-      inputWrap.style.cssText = 'display:flex;flex-direction:column;min-width:0;flex:1;';
-      inputWrap.appendChild(inp);
-      inputWrap.appendChild(doneBadge);
-      row.appendChild(inputWrap);
+      row.appendChild(inp);
 
       row.addEventListener('dragstart', e => {
         e.dataTransfer.effectAllowed = 'move';
@@ -939,9 +942,7 @@ async function saveModal() {
     itemsDiv.querySelectorAll('.entry-row[data-cat-id]').forEach(r => {
       const cid = r.dataset.catId;
       const ta = r.querySelector('textarea');
-      const chk = r.querySelector('input[type=checkbox]');
       if (ta && tempData[cid]) tempData[cid][0].text = ta.value;
-      if (chk && tempData[cid]) tempData[cid][0].done = chk.checked;
     });
   }
 
