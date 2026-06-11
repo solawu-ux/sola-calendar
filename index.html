@@ -37,6 +37,7 @@
     --m-reg:       #b5a085; --m-reg-bg:    #ede5dc;
     --m-equip:     #92b09a; --m-equip-bg:  #ddeee2;
     --m-info:      #9ab0b5; --m-info-bg:   #e3ebee;
+    --m-lib:       #b59a9a; --m-lib-bg:    #ede3e3;
 
     --today-ring: #7c78a0;
     --modal-overlay: rgba(40,38,58,0.42);
@@ -179,12 +180,14 @@
   .entry-chip.cat-reg    { background: var(--m-reg-bg); }
   .entry-chip.cat-equip  { background: var(--m-equip-bg); }
   .entry-chip.cat-info   { background: var(--m-info-bg); }
+  .entry-chip.cat-lib    { background: var(--m-lib-bg); }
   .dot-school { background: var(--m-school); }
   .dot-admin  { background: var(--m-admin); }
   .dot-teach  { background: var(--m-teach); }
   .dot-reg    { background: var(--m-reg); }
   .dot-equip  { background: var(--m-equip); }
   .dot-info   { background: var(--m-info); }
+  .dot-lib    { background: var(--m-lib); }
 
   .more-badge { font-size: 0.58rem; color: var(--text-light); padding: 0 6px; text-align: right; }
 
@@ -275,8 +278,6 @@
   .entry-input:focus { background: rgba(255,255,255,0.92); color: #28263c; }
   .entry-input:last-child { border-right: none; }
 
-
-
   .entry-row.bg-t1  .entry-input { background: var(--t1-bg); }
   .entry-row.bg-t2  .entry-input { background: var(--t2-bg); }
   .entry-row.bg-t3  .entry-input { background: var(--t3-bg); }
@@ -329,13 +330,6 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
-  .source-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 0.6rem; color: var(--text-light);
-    background: rgba(138,126,110,0.08); border: 1px solid var(--border);
-    border-radius: 4px; padding: 1px 5px; pointer-events: none;
-  }
 
   /* ===== LOADING ===== */
   #loadingScreen {
@@ -446,7 +440,7 @@ const CATEGORIES = [
   { id:'t10', label:'10', icon:'10', barClass:'ct-t10', chipClass:'cat-t10', bgClass:'bg-t10', dotClass:'dot-t10' },
 ];
 
-// 教務處分類定義（統一管理，格子與 modal 共用）
+// 教務處分類定義（含圖書館）
 const SRC_CATS = [
   { id:'school', label:'學校', chipClass:'cat-school', dotClass:'dot-school' },
   { id:'admin',  label:'教務', chipClass:'cat-admin',  dotClass:'dot-admin'  },
@@ -454,6 +448,7 @@ const SRC_CATS = [
   { id:'reg',    label:'註冊', chipClass:'cat-reg',    dotClass:'dot-reg'    },
   { id:'equip',  label:'設備', chipClass:'cat-equip',  dotClass:'dot-equip'  },
   { id:'info',   label:'資訊', chipClass:'cat-info',   dotClass:'dot-info'   },
+  { id:'lib',    label:'圖書館', chipClass:'cat-lib',  dotClass:'dot-lib'    },
 ];
 
 const WEEKDAYS = ['一','二','三','四','五','六','日'];
@@ -497,7 +492,6 @@ function renderAllChipsForMonth(year, month) {
 }
 
 // ===== LISTEN: 教務處（唯讀）=====
-// onReady callback 在第一次 snapshot 回來後觸發（不論有無資料）
 function listenSourceMonth(year, month, onReady) {
   if (unsubSrc) unsubSrc();
   const docId = `${year}-${String(month).padStart(2,'0')}`;
@@ -511,7 +505,6 @@ function listenSourceMonth(year, month, onReady) {
         Object.keys(newDays).forEach(dateStr => {
           SOURCE_DATA[dateStr] = newDays[dateStr];
         });
-        // 非首次更新（即時推播）：直接渲染有變動的格子
         if (!firstSnap) {
           Object.keys(newDays).forEach(dateStr => renderChips(dateStr));
         }
@@ -523,7 +516,6 @@ function listenSourceMonth(year, month, onReady) {
     },
     err => {
       console.error('source sync error', err);
-      // 就算失敗也要觸發 onReady，避免畫面卡住
       if (firstSnap) {
         firstSnap = false;
         onReady && onReady();
@@ -536,7 +528,6 @@ function listenSourceMonth(year, month, onReady) {
 function listenMonth(year, month) {
   if (unsub) unsub();
 
-  // 切換月份時清空資料，避免舊月份資料殘留
   DATA = {};
   SOURCE_DATA = {};
   render();
@@ -546,7 +537,6 @@ function listenMonth(year, month) {
   const timeout = setTimeout(() => { setSyncStatus('error', '網路較慢'); }, 3000);
   const docId = `${year}-${String(month).padStart(2,'0')}`;
 
-  // 用旗標等兩個 listener 都至少回應一次，再統一渲染所有格子
   let solaReady = false;
   let srcReady = false;
 
@@ -579,7 +569,6 @@ function listenMonth(year, month) {
     }
   );
 
-  // 教務處 listener，就緒後觸發 tryRenderAll
   listenSourceMonth(year, month, () => {
     srcReady = true;
     tryRenderAll();
@@ -617,17 +606,14 @@ function getOrder(dateStr) {
   return CATEGORIES.map(c => c.id);
 }
 
-// 取得某日期所有要顯示在格子裡的 chip
-// 教務處資料優先排前面，避免被 sola 資料擠掉截斷
 function getAllChips(dateStr) {
   const chips = [];
 
-  // ① 教務處資料（優先顯示）
+  // ① 教務處資料（優先顯示，含圖書館）
   if (SOURCE_DATA[dateStr]) {
     SRC_CATS.forEach(sc => {
       (SOURCE_DATA[dateStr][sc.id] || []).forEach(it => {
         if (it.event || it.time || it.place) {
-          // 三欄都顯示，用 · 分隔，不遺漏任何有值的欄位
           const parts = [it.event, it.time, it.place].filter(Boolean);
           const label = `${sc.label}：${parts.join(' · ')}`;
           chips.push({
@@ -640,7 +626,7 @@ function getAllChips(dateStr) {
     });
   }
 
-  // ② sola 個人資料（排後面）
+  // ② sola 個人資料
   if (DATA[dateStr]) {
     const order = getOrder(dateStr);
     order.forEach(catId => {
@@ -708,7 +694,6 @@ function render() {
     }
     grid.appendChild(div);
   });
-  // 注意：render() 本身不呼叫 renderChips，由 listenMonth 的 tryRenderAll 統一負責
 }
 
 function renderChips(dateStr) {
@@ -749,7 +734,7 @@ function renderModalBody() {
   const body = document.getElementById('modalBody');
   body.innerHTML = '';
 
-  // === 教務處同步區（唯讀）===
+  // === 教務處同步區（唯讀，含圖書館）===
   const srcData = SOURCE_DATA[modalDateStr];
   if (srcData) {
     let hasAny = false;
@@ -768,7 +753,7 @@ function renderModalBody() {
         items.forEach(it => {
           const row = document.createElement('div');
           row.style.cssText = 'display:flex;align-items:center;padding:5px 14px;border-top:1px solid var(--border);background:rgba(245,240,235,0.7);gap:10px;font-size:0.8rem;color:#5a5550;';
-          row.innerHTML = `<span style="color:var(--accent);font-weight:500;min-width:30px;">${sc.label}</span>
+          row.innerHTML = `<span style="color:var(--accent);font-weight:500;min-width:36px;">${sc.label}</span>
             <span style="flex:1;">${it.event||''}</span>
             <span style="color:var(--text-light);font-size:0.75rem;">${it.time||''}</span>
             <span style="color:var(--text-light);font-size:0.75rem;">${it.place||''}</span>`;
