@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -221,4 +222,634 @@
   /* ===== CATEGORY SECTION ===== */
   .cat-section { margin: 0 18px 14px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
   .cat-title-bar {
-    padding: 7px 14px; font-size: 0.82rem; font-weight:
+    padding: 7px 14px; font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.06em; display: flex; align-items: center; gap: 8px; color: #fff;
+  }
+  .cat-title-bar .cat-icon { font-size: 0.9rem; }
+
+  .ct-t1  { background: var(--t1); }
+  .ct-t2  { background: var(--t2); }
+  .ct-t3  { background: var(--t3); }
+  .ct-t4  { background: var(--t4); }
+  .ct-t5  { background: var(--t5); }
+  .ct-t6  { background: var(--t6); }
+  .ct-t7  { background: var(--t7); }
+  .ct-t8  { background: var(--t8); }
+  .ct-t9  { background: var(--t9); }
+  .ct-t10 { background: var(--t10); }
+
+  .cat-items { display: flex; flex-direction: column; gap: 0; overflow-x: hidden; }
+
+  /* ===== ENTRY ROW ===== */
+  .entry-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0; border-top: 1px solid var(--border);
+    width: 100%; align-items: start;
+    transition: opacity 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .entry-row:first-child { border-top: none; }
+
+  .entry-input {
+    padding: 8px 10px; border: none; border-right: 1px solid var(--border);
+    font-size: 0.82rem; font-family: 'Noto Sans TC', sans-serif;
+    color: #3a384e; outline: none; transition: background 0.15s; width: 100%; min-width: 0;
+    resize: none; overflow-y: hidden; overflow-x: hidden;
+    white-space: pre-wrap; word-break: break-all;
+    min-height: 32px; line-height: 1.55;
+  }
+  .entry-input::placeholder { color: transparent; }
+  .entry-input:focus { background: rgba(255,255,255,0.92); color: #28263c; }
+  .entry-input:last-child { border-right: none; }
+
+
+
+  .entry-row.bg-t1  .entry-input { background: var(--t1-bg); }
+  .entry-row.bg-t2  .entry-input { background: var(--t2-bg); }
+  .entry-row.bg-t3  .entry-input { background: var(--t3-bg); }
+  .entry-row.bg-t4  .entry-input { background: var(--t4-bg); }
+  .entry-row.bg-t5  .entry-input { background: var(--t5-bg); }
+  .entry-row.bg-t6  .entry-input { background: var(--t6-bg); }
+  .entry-row.bg-t7  .entry-input { background: var(--t7-bg); }
+  .entry-row.bg-t8  .entry-input { background: var(--t8-bg); }
+  .entry-row.bg-t9  .entry-input { background: var(--t9-bg); }
+  .entry-row.bg-t10 .entry-input { background: var(--t10-bg); }
+
+  /* ===== MODAL FOOTER ===== */
+  .modal-footer {
+    padding: 14px 24px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 10px; background: var(--surface2);
+  }
+  .btn-save {
+    background: var(--accent); border: none; color: #f4f3f8; padding: 8px 28px;
+    border-radius: 9px; font-size: 0.85rem; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif; letter-spacing: 0.06em; transition: opacity 0.18s;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-cancel {
+    background: none; border: 1.5px solid var(--border); color: var(--text-secondary);
+    padding: 8px 20px; border-radius: 9px; font-size: 0.85rem; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif; transition: background 0.15s;
+  }
+  .btn-cancel:hover { background: var(--border); }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 480px) {
+    header { padding: 8px 10px; gap: 6px; }
+    .header-left h1 { font-size: 1rem; }
+    .header-left .sub-label { font-size: 0.62rem; }
+    .header-nav { gap: 5px; }
+    .nav-btn { width: 30px; height: 30px; font-size: 0.9rem; }
+    .today-btn { padding: 5px 10px; font-size: 0.75rem; }
+    .month-display { font-size: 0.92rem; }
+    .calendar-wrap { padding: 10px 8px 60px; }
+    .weekdays-row, .calendar-grid { gap: 3px; }
+    .day-cell { min-height: 80px; border-radius: 7px; }
+    .day-num { font-size: 0.82rem; }
+    .day-cell.today .day-num { width: 22px; height: 22px; font-size: 0.75rem; }
+    .entry-chip { font-size: 0.58rem; padding: 1px 4px; }
+    .entry-chip span { font-size: 0.58rem; }
+    .entry-chip .cat-dot { width: 4px; height: 4px; }
+    .more-badge { font-size: 0.52rem; }
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .source-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.6rem; color: var(--text-light);
+    background: rgba(138,126,110,0.08); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px; pointer-events: none;
+  }
+
+  /* ===== LOADING ===== */
+  #loadingScreen {
+    position: fixed; inset: 0; background: #f0f0f5; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; transition: opacity 0.5s ease;
+  }
+  #loadingScreen.hide { opacity: 0; pointer-events: none; }
+  .loading-title { font-family: 'Noto Serif TC', serif; font-size: 1.4rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.12em; }
+  .loading-sub { font-size: 0.75rem; color: var(--text-light); letter-spacing: 0.06em; }
+  .loading-dots { display: flex; gap: 8px; }
+  .loading-dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    animation: dotBounce 1.2s ease-in-out infinite;
+  }
+  .loading-dots span:nth-child(1){animation-delay:0s;   background:var(--t1);}
+  .loading-dots span:nth-child(2){animation-delay:0.2s; background:var(--t4);}
+  .loading-dots span:nth-child(3){animation-delay:0.4s; background:var(--t7);}
+  .loading-dots span:nth-child(4){animation-delay:0.6s; background:var(--t2);}
+  .loading-dots span:nth-child(5){animation-delay:0.8s; background:var(--t6);}
+  @keyframes dotBounce {
+    0%,80%,100%{transform:scale(0.6);opacity:0.4;}
+    40%{transform:scale(1.3);opacity:1;}
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="loading-title">🐻 Sola 個人行事曆 🐶</div>
+  <div class="loading-dots"><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="loading-sub">資料載入中，請稍候…</div>
+</div>
+
+<header>
+  <div class="header-left">
+    <h1>🐻 Sola 個人行事曆 🐶</h1>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:1px;">
+      <div id="liveClock" style="font-family:'Noto Sans TC',sans-serif;font-size:clamp(0.6rem,2.2vw,0.75rem);color:var(--text-secondary);letter-spacing:0.03em;white-space:nowrap;"></div>
+      <div class="sub-label" id="subLabel"></div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <button class="nav-btn" id="prevBtn">&#8249;</button>
+    <div class="month-display" id="monthDisplay"></div>
+    <button class="nav-btn" id="nextBtn">&#8250;</button>
+    <button class="today-btn" id="todayBtn">本月</button>
+  </div>
+</header>
+
+<div class="calendar-wrap">
+  <div class="weekdays-row" id="weekdaysRow"></div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;flex-direction:column;">
+        <div class="modal-date" id="modalDateLabel"></div>
+        <div class="modal-weekday" id="modalDateWeekday"></div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn-save" id="modalSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div id="syncStatus"><div class="dot"></div><span id="syncText">連線中…</span></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBthGtXaHLWh1gFUOIZEvjMt0k8Mb_MK-4",
+  authDomain: "project-7282357549927797183.firebaseapp.com",
+  projectId: "project-7282357549927797183",
+  storageBucket: "project-7282357549927797183.firebasestorage.app",
+  messagingSenderId: "559099894928",
+  appId: "1:559099894928:web:7842e278956c0d09f00c15",
+  measurementId: "G-HGZQ5RLRND"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+enableIndexedDbPersistence(db).catch(() => {});
+
+// ===== CONFIG =====
+const MIN_YEAR = 2026, MIN_MONTH = 5;
+const MAX_YEAR = 2028, MAX_MONTH = 7;
+
+const CATEGORIES = [
+  { id:'t1',  label:'1',  icon:'1',  barClass:'ct-t1',  chipClass:'cat-t1',  bgClass:'bg-t1',  dotClass:'dot-t1'  },
+  { id:'t2',  label:'2',  icon:'2',  barClass:'ct-t2',  chipClass:'cat-t2',  bgClass:'bg-t2',  dotClass:'dot-t2'  },
+  { id:'t3',  label:'3',  icon:'3',  barClass:'ct-t3',  chipClass:'cat-t3',  bgClass:'bg-t3',  dotClass:'dot-t3'  },
+  { id:'t4',  label:'4',  icon:'4',  barClass:'ct-t4',  chipClass:'cat-t4',  bgClass:'bg-t4',  dotClass:'dot-t4'  },
+  { id:'t5',  label:'5',  icon:'5',  barClass:'ct-t5',  chipClass:'cat-t5',  bgClass:'bg-t5',  dotClass:'dot-t5'  },
+  { id:'t6',  label:'6',  icon:'6',  barClass:'ct-t6',  chipClass:'cat-t6',  bgClass:'bg-t6',  dotClass:'dot-t6'  },
+  { id:'t7',  label:'7',  icon:'7',  barClass:'ct-t7',  chipClass:'cat-t7',  bgClass:'bg-t7',  dotClass:'dot-t7'  },
+  { id:'t8',  label:'8',  icon:'8',  barClass:'ct-t8',  chipClass:'cat-t8',  bgClass:'bg-t8',  dotClass:'dot-t8'  },
+  { id:'t9',  label:'9',  icon:'9',  barClass:'ct-t9',  chipClass:'cat-t9',  bgClass:'bg-t9',  dotClass:'dot-t9'  },
+  { id:'t10', label:'10', icon:'10', barClass:'ct-t10', chipClass:'cat-t10', bgClass:'bg-t10', dotClass:'dot-t10' },
+];
+
+// 教務處分類定義（統一管理，格子與 modal 共用）
+const SRC_CATS = [
+  { id:'school', label:'學校', chipClass:'cat-school', dotClass:'dot-school' },
+  { id:'admin',  label:'教務', chipClass:'cat-admin',  dotClass:'dot-admin'  },
+  { id:'teach',  label:'教學', chipClass:'cat-teach',  dotClass:'dot-teach'  },
+  { id:'reg',    label:'註冊', chipClass:'cat-reg',    dotClass:'dot-reg'    },
+  { id:'equip',  label:'設備', chipClass:'cat-equip',  dotClass:'dot-equip'  },
+  { id:'info',   label:'資訊', chipClass:'cat-info',   dotClass:'dot-info'   },
+];
+
+const WEEKDAYS = ['一','二','三','四','五','六','日'];
+
+// ===== STATE =====
+const today = new Date();
+let currentYear = today.getFullYear();
+let currentMonth = today.getMonth() + 1;
+if (currentYear < MIN_YEAR || (currentYear===MIN_YEAR && currentMonth<MIN_MONTH)) { currentYear=MIN_YEAR; currentMonth=MIN_MONTH; }
+if (currentYear > MAX_YEAR || (currentYear===MAX_YEAR && currentMonth>MAX_MONTH)) { currentYear=MAX_YEAR; currentMonth=MAX_MONTH; }
+
+let DATA = {};
+let SOURCE_DATA = {};
+let modalDateStr = '';
+let tempData = {};
+let orderData = {};
+let unsub = null;
+let unsubSrc = null;
+
+let loadingHidden = false;
+function hideLoading() {
+  if (loadingHidden) return;
+  loadingHidden = true;
+  const el = document.getElementById('loadingScreen');
+  if (el) { el.classList.add('hide'); setTimeout(()=>el.remove(), 600); }
+}
+
+// ===== SYNC UI =====
+function setSyncStatus(cls, text) {
+  document.getElementById('syncStatus').className = cls;
+  document.getElementById('syncText').textContent = text;
+}
+
+// ===== LISTEN: 教務處（唯讀）=====
+function listenSourceMonth(year, month) {
+  if (unsubSrc) unsubSrc();
+  const docId = `${year}-${String(month).padStart(2,'0')}`;
+  unsubSrc = onSnapshot(doc(db, 'calendar', docId),
+    snap => {
+      if (snap.exists()) {
+        const newDays = snap.data().days || {};
+        Object.keys(newDays).forEach(dateStr => {
+          SOURCE_DATA[dateStr] = newDays[dateStr];
+        });
+        // 重新渲染當月所有格子（包含教務處資料）
+        const allCells = document.querySelectorAll('.day-entries[id^="entries-"]');
+        allCells.forEach(el => {
+          const dateStr = el.id.replace('entries-', '');
+          renderChips(dateStr);
+        });
+      }
+    },
+    err => { console.error('source sync error', err); }
+  );
+}
+
+// ===== LISTEN: sola 個人資料 =====
+function listenMonth(year, month) {
+  if (unsub) unsub();
+  // 切換月份時先清除上月快取，確保新月份的教務處資料能即時顯示
+  SOURCE_DATA = {};
+  render();
+  hideLoading();
+  setSyncStatus('saving', '同步中…');
+
+  const timeout = setTimeout(() => { setSyncStatus('error', '網路較慢'); }, 3000);
+  const docId = `${year}-${String(month).padStart(2,'0')}`;
+
+  unsub = onSnapshot(doc(db, 'sola_calendar', docId),
+    snap => {
+      clearTimeout(timeout);
+      if (snap.exists()) {
+        const snapData = snap.data();
+        const newDays = snapData.days || {};
+        const newOrders = snapData.orders || {};
+        Object.assign(DATA, newDays);
+        Object.assign(orderData, newOrders);
+        Object.keys(newDays).forEach(dateStr => renderChips(dateStr));
+      }
+      setSyncStatus('', '已連線');
+    },
+    err => { clearTimeout(timeout); console.error(err); setSyncStatus('error', '連線失敗'); }
+  );
+
+  // 同步教務處資料（會在回呼中自動呼叫 renderChips）
+  listenSourceMonth(year, month);
+}
+
+// ===== FIREBASE SAVE =====
+async function saveToFirebase(dateStr, dayData, order) {
+  setSyncStatus('saving', '儲存中…');
+  try {
+    const [y, m] = dateStr.split('-');
+    const payload = { days: { [dateStr]: dayData } };
+    if (order) payload.orders = { [dateStr]: order };
+    await setDoc(doc(db, 'sola_calendar', `${y}-${m}`), payload, { merge: true });
+    setSyncStatus('', '已儲存 ✓');
+    setTimeout(() => setSyncStatus('', '已連線'), 2000);
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error', '儲存失敗');
+  }
+}
+
+// ===== DATA HELPERS =====
+function getDay(dateStr) {
+  if (!DATA[dateStr]) DATA[dateStr] = {};
+  CATEGORIES.forEach(c => {
+    if (!DATA[dateStr][c.id]) DATA[dateStr][c.id] = [{ text:'', done:false }];
+  });
+  return DATA[dateStr];
+}
+
+function getOrder(dateStr) {
+  const saved = orderData[dateStr];
+  if (saved && saved.length === CATEGORIES.length) return [...saved];
+  return CATEGORIES.map(c => c.id);
+}
+
+// 取得某日期所有要顯示在格子裡的 chip（sola + 教務處）
+function getAllChips(dateStr) {
+  const chips = [];
+
+  // sola 個人資料
+  if (DATA[dateStr]) {
+    const order = getOrder(dateStr);
+    order.forEach(catId => {
+      const c = CATEGORIES.find(x => x.id === catId);
+      if (!c) return;
+      (DATA[dateStr][c.id]||[]).forEach(it => {
+        if (it.text) chips.push({ cat:c, label:it.text, source:'sola', done:!!it.done });
+      });
+    });
+  }
+
+  // 教務處資料
+  if (SOURCE_DATA[dateStr]) {
+    SRC_CATS.forEach(sc => {
+      (SOURCE_DATA[dateStr][sc.id]||[]).forEach(it => {
+        if (it.event || it.time || it.place) {
+          chips.push({
+            cat: { chipClass: sc.chipClass, dotClass: sc.dotClass },
+            label: `${sc.label}：${it.event || it.time || it.place}`,
+            source: 'school'
+          });
+        }
+      });
+    });
+  }
+
+  return chips;
+}
+
+// ===== ACADEMIC YEAR =====
+function getAcademicYearLabel(year, month) {
+  if (month >= 8) { const tw=year-1911; return `${year}/08－${year+1}/07　${tw} 學年度`; }
+  else { const tw=year-1-1911; return `${year-1}/08－${year}/07　${tw} 學年度`; }
+}
+
+// ===== RENDER =====
+function render() {
+  document.getElementById('monthDisplay').textContent = `${currentYear} 年 ${currentMonth} 月`;
+  document.getElementById('subLabel').textContent = getAcademicYearLabel(currentYear, currentMonth);
+
+  const atMin = currentYear===MIN_YEAR && currentMonth===MIN_MONTH;
+  const atMax = currentYear===MAX_YEAR && currentMonth===MAX_MONTH;
+  document.getElementById('prevBtn').disabled = atMin;
+  document.getElementById('prevBtn').style.opacity = atMin ? '0.3' : '1';
+  document.getElementById('nextBtn').disabled = atMax;
+  document.getElementById('nextBtn').style.opacity = atMax ? '0.3' : '1';
+
+  document.getElementById('weekdaysRow').innerHTML =
+    WEEKDAYS.map((d,i) => `<div class="weekday-label${i>=5?' weekend':''}">${d}</div>`).join('');
+
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+
+  const firstDow = (() => { let d=new Date(currentYear,currentMonth-1,1).getDay(); return d===0?6:d-1; })();
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+  const prevMonthDays = new Date(currentYear, currentMonth-1, 0).getDate();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  let cells = [];
+  for (let i=firstDow-1; i>=0; i--) {
+    const m=currentMonth-1===0?12:currentMonth-1;
+    const y=currentMonth-1===0?currentYear-1:currentYear;
+    cells.push({ day:prevMonthDays-i, month:m, year:y, current:false });
+  }
+  for (let d=1; d<=daysInMonth; d++) cells.push({ day:d, month:currentMonth, year:currentYear, current:true });
+  const rem = cells.length%7;
+  if (rem) { for (let d=1; d<=7-rem; d++) { const m=currentMonth+1===13?1:currentMonth+1; const y=currentMonth+1===13?currentYear+1:currentYear; cells.push({day:d,month:m,year:y,current:false}); } }
+
+  cells.forEach((cell, idx) => {
+    const dateStr = `${cell.year}-${String(cell.month).padStart(2,'0')}-${String(cell.day).padStart(2,'0')}`;
+    const isToday = dateStr===todayStr;
+    const isWeekend = idx%7>=5;
+
+    const div = document.createElement('div');
+    div.className = `day-cell${!cell.current?' other-month':''}${isToday?' today':''}${isWeekend?' weekend':''}`;
+    div.innerHTML = `<div class="day-header"><div class="day-num">${cell.day}</div><div class="day-add-hint">＋ 新增</div></div><div class="day-entries" id="entries-${dateStr}"></div>`;
+
+    if (cell.current) {
+      div.addEventListener('click', () => openModal(dateStr));
+      renderChips(dateStr);
+    }
+    grid.appendChild(div);
+  });
+}
+
+function renderChips(dateStr) {
+  const container = document.getElementById(`entries-${dateStr}`);
+  if (!container) return;
+  container.innerHTML = '';
+  const chips = getAllChips(dateStr);
+  chips.slice(0, 4).forEach(chip => {
+    const el = document.createElement('div');
+    el.className = `entry-chip ${chip.cat.chipClass}`;
+    const doneStyle = chip.done ? ' style="opacity:0.6"' : '';
+    el.innerHTML = `<div class="cat-dot ${chip.cat.dotClass}"></div><span${doneStyle}>${chip.label}</span>`;
+    container.appendChild(el);
+  });
+  if (chips.length > 4) {
+    const more = document.createElement('div');
+    more.className = 'more-badge';
+    more.textContent = `+${chips.length-4} 筆`;
+    container.appendChild(more);
+  }
+}
+
+// ===== MODAL =====
+function openModal(dateStr) {
+  modalDateStr = dateStr;
+  const [y,m,d] = dateStr.split('-');
+  const weekdayNames = ['日','一','二','三','四','五','六'];
+  const dow = new Date(parseInt(y), parseInt(m)-1, parseInt(d)).getDay();
+  document.getElementById('modalDateLabel').textContent = `${y} 年 ${parseInt(m)} 月 ${parseInt(d)} 日`;
+  document.getElementById('modalDateWeekday').textContent = `星期${weekdayNames[dow]}`;
+  const dayData = getDay(dateStr);
+  tempData = {};
+  CATEGORIES.forEach(c => { tempData[c.id] = dayData[c.id].map(it=>({text:it.text||'', done:!!it.done})); });
+  renderModalBody();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function renderModalBody() {
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+
+  // === 教務處同步區（唯讀）===
+  const srcData = SOURCE_DATA[modalDateStr];
+  if (srcData) {
+    let hasAny = false;
+    SRC_CATS.forEach(sc => { (srcData[sc.id]||[]).forEach(it => { if (it.event||it.time||it.place) hasAny=true; }); });
+
+    if (hasAny) {
+      const syncBlock = document.createElement('div');
+      syncBlock.style.cssText = 'margin:0 18px 18px;border-radius:10px;overflow:hidden;border:1px solid var(--border);opacity:0.82;';
+      const syncTitle = document.createElement('div');
+      syncTitle.style.cssText = 'padding:7px 14px;font-size:0.78rem;font-weight:500;letter-spacing:0.06em;background:var(--accent);color:#f5f0eb;display:flex;align-items:center;gap:8px;';
+      syncTitle.innerHTML = '🔄 教務處行事曆（同步，唯讀）';
+      syncBlock.appendChild(syncTitle);
+      SRC_CATS.forEach(sc => {
+        const items = (srcData[sc.id]||[]).filter(it => it.event||it.time||it.place);
+        if (!items.length) return;
+        items.forEach(it => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;padding:5px 14px;border-top:1px solid var(--border);background:rgba(245,240,235,0.7);gap:10px;font-size:0.8rem;color:#5a5550;';
+          row.innerHTML = `<span style="color:var(--accent);font-weight:500;min-width:30px;">${sc.label}</span>
+            <span style="flex:1;">${it.event||''}</span>
+            <span style="color:var(--text-light);font-size:0.75rem;">${it.time||''}</span>
+            <span style="color:var(--text-light);font-size:0.75rem;">${it.place||''}</span>`;
+          syncBlock.appendChild(row);
+        });
+      });
+      body.appendChild(syncBlock);
+    }
+  }
+
+  // === 代辦事項（可拖曳排序）===
+  const todoSection = document.createElement('div');
+  todoSection.className = 'cat-section';
+
+  const todoBar = document.createElement('div');
+  todoBar.className = 'cat-title-bar';
+  todoBar.style.cssText = 'background: linear-gradient(90deg, var(--t1) 0%, var(--t4) 60%, var(--t6) 100%);';
+  todoBar.innerHTML = `<span class="cat-icon">📋</span>代辦事項`;
+  todoSection.appendChild(todoBar);
+
+  const itemsDiv = document.createElement('div');
+  itemsDiv.className = 'cat-items';
+
+  let catOrder = getOrder(modalDateStr);
+
+  function buildRows() {
+    itemsDiv.querySelectorAll('.entry-row[data-cat-id]').forEach(r => {
+      const cid = r.dataset.catId;
+      const ta = r.querySelector('textarea');
+      if (ta && tempData[cid]) tempData[cid][0].text = ta.value;
+    });
+
+    itemsDiv.innerHTML = '';
+
+    catOrder.forEach(catId => {
+      const cat = CATEGORIES.find(c => c.id === catId);
+      if (!cat) return;
+      const item = tempData[cat.id][0];
+
+      const row = document.createElement('div');
+      row.className = `entry-row ${cat.bgClass}`;
+      row.dataset.catId = cat.id;
+
+
+      const inp = document.createElement('textarea');
+      inp.className = 'entry-input';
+      inp.rows = 1;
+      inp.value = item.text || '';
+      inp.style.borderRight = 'none';
+      inp.addEventListener('input', e => {
+        tempData[cat.id][0].text = e.target.value;
+        e.target.style.height = 'auto';
+        e.target.style.height = e.target.scrollHeight + 'px';
+      });
+      setTimeout(() => { inp.style.height = 'auto'; inp.style.height = inp.scrollHeight + 'px'; }, 0);
+
+      const inputWrap = document.createElement('div');
+      inputWrap.style.cssText = 'display:flex;flex-direction:column;min-width:0;flex:1;';
+      inputWrap.appendChild(inp);
+      row.appendChild(inputWrap);
+
+      itemsDiv.appendChild(row);
+    });
+  }
+
+  buildRows();
+  todoSection.appendChild(itemsDiv);
+  body.appendChild(todoSection);
+
+  todoSection._getCatOrder = () => catOrder;
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+async function saveModal() {
+  if (!DATA[modalDateStr]) DATA[modalDateStr] = {};
+
+  const itemsDiv = document.querySelector('#modalBody .cat-items');
+  if (itemsDiv) {
+    itemsDiv.querySelectorAll('.entry-row[data-cat-id]').forEach(r => {
+      const cid = r.dataset.catId;
+      const ta = r.querySelector('textarea');
+      if (ta && tempData[cid]) tempData[cid][0].text = ta.value;
+    });
+  }
+
+  CATEGORIES.forEach(c => { DATA[modalDateStr][c.id] = tempData[c.id].map(it=>({...it})); });
+
+  const todoSection = document.querySelector('#modalBody .cat-section');
+  const currentOrder = todoSection && todoSection._getCatOrder ? todoSection._getCatOrder() : CATEGORIES.map(c=>c.id);
+  orderData[modalDateStr] = currentOrder;
+
+  closeModal();
+  renderChips(modalDateStr);
+  await saveToFirebase(modalDateStr, DATA[modalDateStr], currentOrder);
+}
+
+// ===== NAV =====
+function navigate(dir) {
+  currentMonth += dir;
+  if (currentMonth>12){currentMonth=1;currentYear++;}
+  if (currentMonth<1){currentMonth=12;currentYear--;}
+  if (currentYear<MIN_YEAR||(currentYear===MIN_YEAR&&currentMonth<MIN_MONTH)){currentYear=MIN_YEAR;currentMonth=MIN_MONTH;}
+  if (currentYear>MAX_YEAR||(currentYear===MAX_YEAR&&currentMonth>MAX_MONTH)){currentYear=MAX_YEAR;currentMonth=MAX_MONTH;}
+  listenMonth(currentYear, currentMonth);
+}
+
+function goToday() {
+  const t = new Date(); currentYear=t.getFullYear(); currentMonth=t.getMonth()+1;
+  if (currentYear<MIN_YEAR||(currentYear===MIN_YEAR&&currentMonth<MIN_MONTH)){currentYear=MIN_YEAR;currentMonth=MIN_MONTH;}
+  if (currentYear>MAX_YEAR||(currentYear===MAX_YEAR&&currentMonth>MAX_MONTH)){currentYear=MAX_YEAR;currentMonth=MAX_MONTH;}
+  listenMonth(currentYear, currentMonth);
+}
+
+// ===== EVENTS =====
+document.getElementById('prevBtn').addEventListener('click', ()=>navigate(-1));
+document.getElementById('nextBtn').addEventListener('click', ()=>navigate(1));
+document.getElementById('todayBtn').addEventListener('click', goToday);
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalSave').addEventListener('click', saveModal);
+document.getElementById('modalOverlay').addEventListener('click', e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
+document.addEventListener('keydown', e=>{if(e.key==='Escape')closeModal();});
+
+// ===== LIVE CLOCK =====
+function updateClock() {
+  const now = new Date();
+  const weekdays = ['日','一','二','三','四','五','六'];
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  const w = weekdays[now.getDay()];
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('liveClock').textContent = `${y}/${m}/${d}（星期${w}）${hh}:${mm}:${ss}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ===== INIT =====
+listenMonth(currentYear, currentMonth);
+</script>
+</body>
+</html>
